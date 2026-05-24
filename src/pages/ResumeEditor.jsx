@@ -136,7 +136,7 @@ export default function ResumeEditor() {
   const generateFullN8n = async () => {
     setIsGeneratingFull(true);
     setAiOutput(null);
-    const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || 'http://localhost:5678/webhook/rozgar-cv-maker';
+    const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://rozgar-n8n.onrender.com/webhook/rozgar-cv-maker';
     try {
       // Create payload matching n8n workflow expectations
       const payload = {
