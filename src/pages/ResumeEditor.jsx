@@ -76,7 +76,7 @@ export default function ResumeEditor() {
 
   const callN8nWebhook = async (payload) => {
     // The user's exact Webhook path from n8n
-    const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook-test/rozgar-cv-maker';
+    const N8N_WEBHOOK_URL = 'https://rozgar-n8n.onrender.com/webhook/rozgar-cv-maker';
     
     try {
       const response = await fetch(N8N_WEBHOOK_URL, {
