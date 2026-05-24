@@ -12,8 +12,8 @@ export function Template1({ data, color = '#2563EB' }) {
       {/* Left Sidebar */}
       <div style={{ width: '35%', backgroundColor: '#f5f5f5', padding: '28px 20px', borderRight: '1px solid #e0e0e0', flexShrink: 0 }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ width: 72, height: 72, borderRadius: '50%', backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', color: '#fff', fontSize: 28, fontWeight: 900 }}>
-            {personal.firstName?.[0]?.toUpperCase() || '?'}
+          <div style={{ width: 72, height: 72, borderRadius: '50%', backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', color: '#fff', fontSize: 28, fontWeight: 900, overflow: 'hidden' }}>
+            {personal.photo ? <img src={personal.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (personal.firstName?.[0]?.toUpperCase() || '?')}
           </div>
         </div>
         <Section title="PERSONAL DETAILS" color={color}>
@@ -94,8 +94,8 @@ export function Template2({ data, color = '#7C3AED' }) {
     <div style={{ fontFamily: 'Georgia, serif', width: '100%', minHeight: '297mm', padding: '32px 36px', backgroundColor: '#fff', fontSize: 11 }}>
       {/* Header */}
       <div style={{ display:'flex', gap:24, alignItems:'center', marginBottom:24, paddingBottom:20, borderBottom:`2px solid ${color}` }}>
-        <div style={{ width:90, height:90, borderRadius:'50%', backgroundColor: color, display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:36, fontWeight:900, flexShrink:0 }}>
-          {personal.firstName?.[0]?.toUpperCase() || '?'}
+        <div style={{ width:90, height:90, borderRadius:'50%', backgroundColor: color, display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:36, fontWeight:900, flexShrink:0, overflow: 'hidden' }}>
+          {personal.photo ? <img src={personal.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (personal.firstName?.[0]?.toUpperCase() || '?')}
         </div>
         <div>
           <h1 style={{ margin:0, fontSize:26, fontWeight:900, color:'#1a1a1a' }}>{personal.firstName || 'First'} {personal.lastName || 'Last Name'}</h1>
@@ -305,8 +305,8 @@ export function Template5({ data, color = '#DC2626' }) {
     <div style={{ fontFamily: 'Georgia, serif', width: '100%', minHeight: '297mm', fontSize: 11 }}>
       {/* Warm header */}
       <div style={{ backgroundColor: '#fdf6ec', borderBottom:`3px solid ${color}`, padding:'24px 32px', display:'flex', gap:24, alignItems:'flex-start' }}>
-        <div style={{ width:90, height:90, borderRadius:'50%', backgroundColor:color, display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:34, fontWeight:900, border:`4px solid #fff`, boxShadow:'0 2px 12px rgba(0,0,0,0.15)', flexShrink:0 }}>
-          {personal.firstName?.[0]?.toUpperCase() || '?'}
+        <div style={{ width:90, height:90, borderRadius:'50%', backgroundColor:color, display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:34, fontWeight:900, border:`4px solid #fff`, boxShadow:'0 2px 12px rgba(0,0,0,0.15)', flexShrink:0, overflow: 'hidden' }}>
+          {personal.photo ? <img src={personal.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (personal.firstName?.[0]?.toUpperCase() || '?')}
         </div>
         <div style={{ flex:1 }}>
           <h1 style={{ margin:0, fontSize:24, fontWeight:900, color:'#1a1a1a' }}>{personal.firstName || 'Amelia'} {personal.lastName || 'Davis'}</h1>

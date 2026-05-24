@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useReactToPrint } from 'react-to-print';
-import { ChevronRight, ChevronLeft, User, Briefcase, GraduationCap, Star, Globe, BookOpen, Heart, FileText, Download, Eye, Palette, Plus, Trash2, LayoutTemplate, X, Sparkles, Loader2 } from 'lucide-react';
+import html2pdf from 'html2pdf.js';
+import { ChevronRight, ChevronLeft, User, Briefcase, GraduationCap, Star, Globe, BookOpen, Heart, FileText, Download, Eye, Palette, Plus, Trash2, LayoutTemplate, X, Sparkles, Loader2, Camera } from 'lucide-react';
 import { ALL_TEMPLATES } from '../components/CVTemplates';
 
 const sections = [
@@ -53,7 +53,10 @@ export default function ResumeEditor() {
   const [selectedTemplate, setSelectedTemplate] = useState(ALL_TEMPLATES[0]);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
-  const [personal, setPersonal] = useState({ jobTitle: '', firstName: '', lastName: '', email: '', phone: '', city: '', linkedin: '' });
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const [personal, setPersonal] = useState({ jobTitle: '', firstName: '', lastName: '', email: '', phone: '', city: '', linkedin: '', photo: null });
   const [profile, setProfile] = useState('');
   const [experiences, setExperiences] = useState([{ company: '', position: '', dates: '', desc: '' }]);
   const [education, setEducation] = useState({
@@ -240,16 +243,35 @@ export default function ResumeEditor() {
 
   const componentRef = useRef(null);
 
-  const handleDownload = useReactToPrint({
-    contentRef: componentRef,
-    documentTitle: personal.fullName ? `${personal.fullName}_CV` : 'My_CV',
-    pageStyle: `
-      @page { size: A4 portrait; margin: 0; }
-      @media print {
-        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      }
-    `
-  });
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => updatePersonal('photo', reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDownload = async () => {
+    const element = componentRef.current;
+    if (!element) return;
+    setIsDownloading(true);
+
+    const originalTransform = element.style.transform;
+    element.style.transform = 'scale(1)';
+    
+    const opt = {
+      margin:       0,
+      filename:     `${personal.firstName || 'My'}_${personal.lastName || 'CV'}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, logging: false },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    await html2pdf().set(opt).from(element).save();
+    element.style.transform = originalTransform;
+    setIsDownloading(false);
+  };
 
   const openN8nHtmlCv = () => {
     if (aiOutput && aiOutput.cv_html) {
@@ -384,6 +406,19 @@ export default function ResumeEditor() {
 
             {/* PERSONAL */}
             {activeSection === 0 && (<>
+              <div className="flex flex-col items-center mb-6">
+                <div className="relative w-24 h-24 rounded-full bg-slate-200 border-4 border-white shadow-md flex items-center justify-center overflow-hidden mb-3">
+                  {personal.photo ? (
+                    <img src={personal.photo} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={40} className="text-slate-400" />
+                  )}
+                </div>
+                <label className="cursor-pointer bg-white px-4 py-2 border border-slate-200 shadow-sm rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
+                  <Camera size={16} /> Upload Photo
+                  <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                </label>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <InputField label="First Name *" value={personal.firstName} onChange={v => updatePersonal('firstName', v)} placeholder="Ali" />
                 <InputField label="Last Name *" value={personal.lastName} onChange={v => updatePersonal('lastName', v)} placeholder="Khan" />
@@ -592,14 +627,33 @@ export default function ResumeEditor() {
                 <textarea value={hobbies} onChange={e => setHobbies(e.target.value)} rows={3} className={inputStyle + ' resize-none'}
                   placeholder="e.g. Photography, Hiking, Open Source, Reading Tech Blogs" />
               </div>
-              <div className="mt-4 p-6 rounded-2xl text-center border-2 border-dashed" style={{ borderColor: activeColor + '50', backgroundColor: activeLight }}>
+              <div className="mt-8 p-6 rounded-2xl text-center border-2 border-dashed" style={{ borderColor: activeColor + '50', backgroundColor: activeLight }}>
                 <div className="text-4xl mb-3">🎉</div>
                 <h3 className="text-lg font-bold text-slate-800 mb-2">Your CV is almost ready!</h3>
-                <p className="text-sm text-slate-500 mb-5">Download the PDF, or generate AI extras (Job Request, Interview Intro) via your n8n workflow.</p>
+                <p className="text-sm text-slate-500 mb-5">Choose a design template and download your PDF, or generate AI extras.</p>
                 
-                <div className="flex flex-col gap-3 max-w-sm mx-auto">
-                  <button onClick={handleDownload} className="w-full py-3 rounded-xl text-white font-bold shadow-md hover:opacity-90 transition-opacity flex justify-center items-center gap-2" style={{ backgroundColor: activeColor }}>
-                    <Download size={16} /> Download PDF
+                <div className="grid grid-cols-2 gap-3 mb-6 max-w-md mx-auto">
+                  <button onClick={() => setShowTemplatePicker(true)} className="flex justify-center items-center gap-2 py-3 rounded-xl font-bold bg-white border shadow-sm text-slate-700 hover:bg-slate-50">
+                    <LayoutTemplate size={16} style={{ color: activeColor }} /> Change Template
+                  </button>
+                  <button onClick={() => setShowColorPicker(v => !v)} className="flex justify-center items-center gap-2 py-3 rounded-xl font-bold bg-white border shadow-sm text-slate-700 hover:bg-slate-50 relative">
+                    <Palette size={16} style={{ color: activeColor }} /> Colors
+                    {showColorPicker && (
+                      <div className="absolute bottom-full left-0 mb-2 p-3 bg-white rounded-xl shadow-xl border border-slate-100 flex flex-wrap gap-2 w-48 z-10">
+                        {templateColors.map(c => (
+                          <button key={c.name} onClick={(e) => { e.stopPropagation(); setSelectedColor(c); setShowColorPicker(false); }}
+                            className={`w-8 h-8 rounded-full border-4 transition-transform hover:scale-110 ${selectedColor.name === c.name ? 'border-slate-300 scale-110' : 'border-transparent'}`}
+                            style={{ backgroundColor: c.color }} title={c.name} />
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-3 max-w-md mx-auto">
+                  <button onClick={handleDownload} disabled={isDownloading} className="w-full py-4 rounded-xl text-white font-bold shadow-md hover:opacity-90 transition-opacity flex justify-center items-center gap-2 text-lg disabled:opacity-70" style={{ backgroundColor: activeColor }}>
+                    {isDownloading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />} 
+                    {isDownloading ? 'Generating PDF...' : 'Download PDF'}
                   </button>
                   
                   <button onClick={generateFullN8n} disabled={isGeneratingFull} className="w-full py-3 rounded-xl font-bold border-2 transition-all flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed" style={{ borderColor: activeColor, color: activeColor, backgroundColor: 'white' }}>
@@ -666,34 +720,48 @@ export default function ResumeEditor() {
               Next <ChevronRight size={18} />
             </button>
           ) : (
-            <button onClick={handleDownload} className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-md hover:opacity-90 transition-all" style={{ backgroundColor: '#059669' }}>
-              <Download size={16} /> Download PDF
+            <button onClick={handleDownload} disabled={isDownloading} className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-md hover:opacity-90 transition-all disabled:opacity-70" style={{ backgroundColor: '#059669' }}>
+              {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} 
+              {isDownloading ? 'Processing...' : 'Download PDF'}
             </button>
           )}
         </div>
       </div>
 
       {/* ── RIGHT LIVE PREVIEW ── */}
-      <div className="hidden lg:flex flex-col w-[44%] bg-slate-300 print:w-full print:bg-white">
-        <div className="h-16 flex items-center justify-between px-5 shrink-0 bg-slate-200 border-b border-slate-300 no-print">
+      <div className={`${showMobilePreview ? 'flex fixed inset-0 z-40 pt-16 pb-20' : 'hidden'} lg:flex lg:relative lg:pt-0 lg:pb-0 flex-col w-full lg:w-[44%] bg-slate-300 print:w-full print:bg-white`}>
+        {showMobilePreview && (
+          <div className="absolute top-4 right-4 z-50 lg:hidden">
+             <button onClick={() => setShowMobilePreview(false)} className="bg-slate-800 text-white p-2 rounded-full shadow-lg"><X size={20}/></button>
+          </div>
+        )}
+        <div className="h-16 flex items-center justify-between px-5 shrink-0 bg-slate-200 border-b border-slate-300 no-print hidden lg:flex">
           <button onClick={() => setShowTemplatePicker(true)}
             className="flex items-center gap-2 text-sm font-bold text-slate-700 hover:text-primary transition-colors bg-white border border-slate-200 px-4 py-2 rounded-lg hover:border-blue-400 shadow-sm">
             <LayoutTemplate size={16} style={{ color: activeColor }} /> {selectedTemplate.name}
           </button>
           <div className="flex gap-2">
             <button className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm">Save</button>
-            <button onClick={handleDownload} className="px-4 py-2 text-sm font-bold text-white rounded-lg shadow-md hover:opacity-90 flex items-center gap-1.5 transition-all" style={{ backgroundColor: activeColor }}>
-              <Download size={14} /> PDF
+            <button onClick={handleDownload} disabled={isDownloading} className="px-4 py-2 text-sm font-bold text-white rounded-lg shadow-md hover:opacity-90 flex items-center gap-1.5 transition-all disabled:opacity-70" style={{ backgroundColor: activeColor }}>
+              {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} PDF
             </button>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center items-start print:p-0 print:overflow-visible">
           <div ref={componentRef} id="cv-print-area" className="bg-white shadow-2xl origin-top print:!transform-none print:!m-0 print:!shadow-none"
-            style={{ width: '210mm', minHeight: '297mm', transform: 'scale(0.60)', transformOrigin: 'top center', marginBottom: '-42%' }}>
+            style={{ width: '210mm', minHeight: '297mm', transform: showMobilePreview ? 'scale(0.45)' : 'scale(0.60)', transformOrigin: 'top center', marginBottom: showMobilePreview ? '-50%' : '-42%' }}>
             <ActiveCVTemplate data={cvData} color={activeColor} />
           </div>
         </div>
       </div>
+
+      {/* ── FLOATING MOBILE PREVIEW BUTTON ── */}
+      {!showMobilePreview && (
+        <button onClick={() => setShowMobilePreview(true)}
+          className="lg:hidden fixed bottom-24 right-4 w-14 h-14 bg-slate-800 text-white rounded-full shadow-2xl flex items-center justify-center z-30 hover:bg-slate-700 active:scale-95 transition-all border-2 border-white">
+          <Eye size={24} />
+        </button>
+      )}
     </div>
   );
 }
